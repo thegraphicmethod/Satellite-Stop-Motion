@@ -220,4 +220,6 @@ Desarrollo: Sergio Galán | [The Graphic Method Studio](http://graphicmethod.stu
 Puedes hacer lo que quieras con este código. Es software libre.
 MIT
 
+Las obras creadas con este software son propiedad de sus autores pero deben mencionar el uso de esta herramienta en los créditos así como un enlace a esta página.
+
 Si lo has usado para hacer algun proyecto me encantaría verlo. Puedes escribirme a sergio-at-graphicmethod.studio
