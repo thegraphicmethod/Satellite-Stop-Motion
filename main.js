@@ -103,11 +103,12 @@ const imagesInOrder = [];
     for (let j = 0; j < points.length; j++) {
       const [lon, lat] = points[j];
       await page.evaluate(
-        (lon, lat) => {
-          flyTo(lon, lat, 16);
+        (lon, lat,zoom) => {
+          flyTo(lon, lat, zoom);
         },
         lon,
-        lat
+        lat,
+        zoom
       );
       // await page.waitForTimeout(1000); // Wait for the map to load
       await page.waitForSelector(".loaded");
