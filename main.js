@@ -26,8 +26,8 @@ if (accesor == '') coordinatesArray = jsonData;
 const isDebug = config.get("debug");
 
 let headlessmode = config.get("headless");
-if (headlessmode == true) headlessmode = "new";
-if( isDebug ) headlessmode = false;
+if (headlessmode === true) headlessmode = "new";
+if (isDebug) headlessmode = false;
 
 const zoom = config.get("map.zoom"); 
 const STEP_SIZE = config.get("map.step"); // tamaño del salto. 0.001 es aproximadamente 100 metros por el ecuador

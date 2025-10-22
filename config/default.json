@@ -15,10 +15,11 @@
         "jpgQuality": 90,
         "width": 1280,
         "height":720,
-        "name": "alcoi"
+        "name": "alcoi",
+        "folder": ""
     },
-    "headless": true,
+    "headless": false,
     "debug": true,
-    "runloop":true
+    "runloop":false
 
 }
