@@ -11,7 +11,7 @@ import {
   copyDatafileToFrontend,
   generateFullArrayPoints,
   createGeoJsonLineFromPoints,
-  writeDatafileToFrontend
+  writeDatafileToFrontend,
 } from "./utils.js";
 
 /**
@@ -32,6 +32,9 @@ import {
  * @param {number} config.image.height - Image height
  * @param {string} config.image.name - Image name prefix
  * @param {string} config.image.folder - Optional subfolder within images directory
+ * @param {Object} config.visualization - Visualization configuration
+ * @param {boolean} config.visualization.showPath - Whether to show the full path line
+ * @param {boolean} config.visualization.showCurrentPoint - Whether to show current point marker
  * @param {boolean} config.headless - Whether to run in headless mode
  * @param {boolean} config.debug - Whether to run in debug mode
  * @param {boolean} config.runloop - Whether to run the full travel loop
@@ -40,13 +43,18 @@ import {
 export async function satelliteStopMotion(config) {
   try {
     // Load and process dataset
-    const loadJSON = (filename) => JSON.parse(fs.readFileSync(path.join(process.cwd(), filename), "utf8"));
-    
+    const loadJSON = (filename) =>
+      JSON.parse(fs.readFileSync(path.join(process.cwd(), filename), "utf8"));
+
     const jsonData = loadJSON(config.dataset.file);
     const accesor = config.dataset.accesor;
-    let coordinatesArray = _get(jsonData, accesor);
-    if (accesor === '') coordinatesArray = jsonData;
-    
+    let coordinatesArray = [];
+    if (accesor === "") {
+      coordinatesArray = jsonData;
+    } else {
+      coordinatesArray = _get(jsonData, accesor);
+    }
+
     const isDebug = config.debug;
     let headlessmode = config.headless;
     if (headlessmode === true) headlessmode = "new";
@@ -57,7 +65,9 @@ export async function satelliteStopMotion(config) {
     const jpgQuality = config.image.jpgQuality;
     const frameWidth = config.image.width;
     const frameHeight = config.image.height;
-    const imageFolder = config.image.folder || ''; // Optional subfolder
+    const imageFolder = config.image.folder || ""; // Optional subfolder
+    const showPath = config.visualization?.showPath || false;
+    const showCurrentPoint = config.visualization?.showCurrentPoint || false;
     const urlBase = "http://localhost:3300/";
     const urlDebug = "http://localhost:3300?debug=true";
     const imageName = config.image.name;
@@ -68,6 +78,14 @@ export async function satelliteStopMotion(config) {
     createFrontConfigFile(config.map.mapbox, fs);
     copyDatafileToFrontend(path.join(process.cwd(), config.dataset.file), 'dataset.json', fs);
 
+    // Create visualization configuration file
+    const visualizationConfig = {
+      showPath: showPath,
+      showCurrentPoint: showCurrentPoint,
+      coordinates: coordinatesArray,
+    };
+
+    writeDatafileToFrontend(visualizationConfig, "visualization.json", fs);
     if (runloop) {
       return await travel(coordinatesArray, {
         headlessmode,
@@ -78,7 +96,9 @@ export async function satelliteStopMotion(config) {
         frameHeight,
         url,
         imageName,
-        imageFolder
+        imageFolder,
+        showPath,
+        showCurrentPoint,
       });
     } else {
       return await initWithoutTravel(coordinatesArray, {
@@ -87,11 +107,11 @@ export async function satelliteStopMotion(config) {
         STEP_SIZE,
         frameWidth,
         frameHeight,
-        url
+        url,
       });
     }
   } catch (error) {
-    console.error('Error in satelliteStopMotion:', error);
+    console.error("Error in satelliteStopMotion:", error);
     throw error;
   }
 }
@@ -112,11 +132,13 @@ async function travel(coordinatesArray, options) {
     frameHeight,
     url,
     imageName,
-    imageFolder
+    imageFolder,
+    showPath,
+    showCurrentPoint,
   } = options;
 
   // Create image directory structure
-  const imagesDir = imageFolder ? `images/${imageFolder}` : 'images';
+  const imagesDir = imageFolder ? `images/${imageFolder}` : "images";
   if (!fs.existsSync(imagesDir)) {
     fs.mkdirSync(imagesDir, { recursive: true });
     console.log(`📁 Created directory: ${imagesDir}`);
@@ -141,25 +163,32 @@ async function travel(coordinatesArray, options) {
   /* screenshot at first point */
   const [lon0, lat0] = lastUsedPoint;
   const imagesInOrder = [];
-  
+
   await page.evaluate(
-    (lon0, lat0, zoom) => {
-      flyTo(lon0, lat0, zoom);
+    (lon0, lat0, zoom, showCurrentPoint) => {
+      flyTo(lon0, lat0, zoom, showCurrentPoint);
     },
     lon0,
     lat0,
-    zoom
+    zoom,
+    showCurrentPoint
   );
-  
+
   await page.waitForSelector(".loaded");
   const element0 = await page.$(".loaded");
   await element0.screenshot({
-    path: `${imagesDir}/${imageName}_${padNumber(0)}-${padNumber(0)}-${slugify(lon0)}-${slugify(lat0)}.jpg`,
+    path: `${imagesDir}/${imageName}_${padNumber(0)}-${padNumber(0)}-${slugify(
+      lon0
+    )}-${slugify(lat0)}.jpg`,
     quality: jpgQuality,
     type: "jpeg",
   });
-  imagesInOrder.push(`${imagesDir}/${imageName}_${padNumber(0)}-${padNumber(0)}-${slugify(lon0)}-${slugify(lat0)}.jpg`);
-  
+  imagesInOrder.push(
+    `${imagesDir}/${imageName}_${padNumber(0)}-${padNumber(0)}-${slugify(
+      lon0
+    )}-${slugify(lat0)}.jpg`
+  );
+
   // Fly to each POI and take a screenshot
   const nitems = POI.length - 1;
   for (let i = 1; i < POI.length; i++) {
@@ -176,35 +205,40 @@ async function travel(coordinatesArray, options) {
     for (let j = 0; j < points.length; j++) {
       const [lon, lat] = points[j];
       await page.evaluate(
-        (lon, lat, zoom) => {
-          flyTo(lon, lat, zoom);
+        (lon, lat, zoom, showCurrentPoint) => {
+          flyTo(lon, lat, zoom, showCurrentPoint);
         },
         lon,
         lat,
-        zoom
+        zoom,
+        showCurrentPoint
       );
       // await page.waitForTimeout(1000); // Wait for the map to load
       await page.waitForSelector(".loaded");
       const element = await page.$(".loaded");
       await element.screenshot({
-        path: `${imagesDir}/${imageName}_${padNumber(i)}-${padNumber(j)}-${slugify(
-          lon
-        )}-${slugify(lat)}.jpg`,
+        path: `${imagesDir}/${imageName}_${padNumber(i)}-${padNumber(
+          j
+        )}-${slugify(lon)}-${slugify(lat)}.jpg`,
         quality: jpgQuality,
         type: "jpeg",
       });
-      imagesInOrder.push(`${imagesDir}/${imageName}_${padNumber(i)}-${padNumber(j)}-${slugify(lon)}-${slugify(lat)}.jpg`);
+      imagesInOrder.push(
+        `${imagesDir}/${imageName}_${padNumber(i)}-${padNumber(j)}-${slugify(
+          lon
+        )}-${slugify(lat)}.jpg`
+      );
       console.log(`Screenshot ${lon} ,${lat} saved`);
     }
   }
-  
+
   await browser.close();
-  
+
   return {
     success: true,
     imagesCreated: imagesInOrder.length,
     imagesList: imagesInOrder,
-    browser: null // Browser is closed
+    browser: null, // Browser is closed
   };
 }
 
@@ -221,7 +255,8 @@ async function initWithoutTravel(coordinatesArray, options) {
     STEP_SIZE,
     frameWidth,
     frameHeight,
-    url
+    url,
+    showCurrentPoint,
   } = options;
 
   const POI = coordinatesArray;
@@ -247,20 +282,21 @@ async function initWithoutTravel(coordinatesArray, options) {
   await page.waitForSelector(".loaded");
 
   await page.evaluate(
-    (lon0, lat0, zoom) => {
-      flyTo(lon0, lat0, zoom);
+    (lon0, lat0, zoom, showCurrentPoint) => {
+      flyTo(lon0, lat0, zoom, showCurrentPoint);
     },
     lon0,
     lat0,
-    zoom
+    zoom,
+    showCurrentPoint
   );
-  
+
   return {
     success: true,
     browser: browser,
     page: page,
     coordinates: coordinatesArray,
-    points: points
+    points: points,
   };
 }
 
@@ -272,7 +308,9 @@ async function initWithoutTravel(coordinatesArray, options) {
 export function startServer(port = 3300) {
   const app = express();
   app.use(express.static("./frontend/dist"));
-  const server = app.listen(port, () => console.log(`Server ready on port ${port}`));
+  const server = app.listen(port, () =>
+    console.log(`Server ready on port ${port}`)
+  );
   return { app, server };
 }
 

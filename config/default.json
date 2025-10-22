@@ -15,11 +15,15 @@
         "jpgQuality": 90,
         "width": 1280,
         "height":720,
-        "name": "alcoi",
-        "folder": ""
+        "name": "alcoiv2",
+        "folder": "alcoiv2"
+    },
+    "visualization": {
+        "showPath": true,
+        "showCurrentPoint": true
     },
     "headless": false,
-    "debug": true,
-    "runloop":false
+    "debug": false,
+    "runloop":true
 
 }

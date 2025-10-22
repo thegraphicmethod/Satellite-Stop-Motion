@@ -29,6 +29,10 @@ async function exampleWithCustomConfig() {
       name: "alcoi_hd",
       folder: "hd_quality"  // Images will be saved in images/hd_quality/
     },
+    visualization: {
+      showPath: true,        // Show the full route path
+      showCurrentPoint: true // Show current position marker
+    },
     headless: true,
     debug: false,
     runloop: true
@@ -101,12 +105,14 @@ async function exampleBatchProcessing() {
       dataset: { file: "paths/alcoi.json", accesor: "" },
       map: { zoom: 16, step: 0.001, mapbox: { mapboxToken: "pk.eyJ1IjoiaW52aWFibGUiLCJhIjoiY2xwYTRzMXRvMDRteDJqbmtucnk1Z3U0aCJ9.itMy9INBAXIfD08bQa7oiw", mapboxStyle: "mapbox://styles/mapbox/satellite-v9" } },
       image: { jpgQuality: 90, width: 1280, height: 720, name: "alcoi_batch1", folder: "alcoi_route" },
+      visualization: { showPath: true, showCurrentPoint: true },
       headless: true, debug: false, runloop: true
     },
     {
       dataset: { file: "paths/castellana.json", accesor: "" },
       map: { zoom: 14, step: 0.002, mapbox: { mapboxToken: "pk.eyJ1IjoiaW52aWFibGUiLCJhIjoiY2xwYTRzMXRvMDRteDJqbmtucnk1Z3U0aCJ9.itMy9INBAXIfD08bQa7oiw", mapboxStyle: "mapbox://styles/mapbox/satellite-v9" } },
       image: { jpgQuality: 90, width: 1280, height: 720, name: "castellana_batch2", folder: "castellana_route" },
+      visualization: { showPath: true, showCurrentPoint: false },
       headless: true, debug: false, runloop: true
     }
   ];

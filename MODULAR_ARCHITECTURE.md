@@ -40,6 +40,10 @@ const config = {
     name: "alcoi",                   // Image name prefix
     folder: "alcoi_route"             // Optional subfolder within images directory
   },
+  visualization: {
+    showPath: true,                  // Show the full route path line
+    showCurrentPoint: true            // Show current position marker
+  },
   headless: true,                    // Run in headless mode
   debug: false,                      // Enable debug mode
   runloop: true                      // Run full travel loop
@@ -166,6 +170,34 @@ images/
     ├── direct_0000-0000-...jpg
     └── direct_0001-0000-...jpg
 ```
+
+### Path Visualization Features
+
+The `visualization` configuration allows you to add visual elements to your captured images:
+
+```javascript
+const config = {
+  // ... other config
+  visualization: {
+    showPath: true,        // Show red line for the full route
+    showCurrentPoint: true // Show green marker for current position
+  }
+};
+```
+
+**Visualization Options:**
+- **`showPath`**: Displays a red line showing the complete route path
+- **`showCurrentPoint`**: Shows a green circle marker at the current capture position
+
+**Visual Elements:**
+- **Path Line**: Red line (`#ff0000`) with 3px width and 80% opacity
+- **Current Point**: Green circle (`#00ff00`) with white border, 8px radius
+
+**Use Cases:**
+- **Route Documentation**: Show the complete path for context
+- **Progress Tracking**: Highlight current position during capture
+- **Educational Content**: Visualize the journey for presentations
+- **Debug Mode**: Verify route accuracy and capture points
 
 ### Custom Configuration from External Source
 

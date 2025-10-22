@@ -13,7 +13,16 @@ let isTest = ref(false);
 const INITZOOM = 16;
  onMounted(async () => {
   console.log(json)
-  const config = await json("/config.json");
+  const config = await json("/config.json"); // pre-existing
+  
+  // Load visualization configuration
+  let visualizationConfig = null;
+  try {
+    visualizationConfig = await json("/visualization.json");
+  } catch (error) {
+    console.log("No visualization config found, using defaults");
+    visualizationConfig = { showPath: false, showCurrentPoint: false, coordinates: [] };
+  }
 
   mapboxgl.accessToken =
     config.mapboxToken;
@@ -21,7 +30,8 @@ const INITZOOM = 16;
   window.map = new mapboxgl.Map({
     container: "map", // container ID
     style: config.mapboxStyle, // style URL
-    center: [-8.8086093, 27.6595196], // starting position [lng, lat]
+    center: [  -0.4706550535457927,
+            38.70919986718257], // starting position [lng, lat]
     zoom: INITZOOM, // starting zoom
     attributionControl: false,
   });
@@ -80,6 +90,65 @@ const INITZOOM = 16;
   /*** geojson */
 
   window.map.on("load", function () {
+    // Add visualization layers if enabled
+    if (visualizationConfig.showPath && visualizationConfig.coordinates.length > 0) {
+      // Create GeoJSON for the path
+      console.log('visualizationConfig.coordinates ---- DEBUG ---');
+      const pathGeoJSON = {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: visualizationConfig.coordinates
+        }
+      };
+
+      // Add path source and layer
+      window.map.addSource("route-path", {
+        type: "geojson",
+        data: pathGeoJSON
+      });
+
+      window.map.addLayer({
+        id: "route-path-layer",
+        type: "line",
+        source: "route-path",
+        paint: {
+          "line-color": "#ff0000",
+          "line-opacity": 0.8,
+          "line-width": 3,
+        },
+      });
+    }
+
+    if (visualizationConfig.showCurrentPoint) {
+      // Add current point source (will be updated by flyTo function)
+      window.map.addSource("current-point", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "Point",
+            coordinates: [0, 0]
+          }
+        }
+      });
+
+      window.map.addLayer({
+        id: "current-point-layer",
+        type: "circle",
+        source: "current-point",
+        paint: {
+          "circle-color": "#00ff00",
+          "circle-opacity": 1,
+          "circle-radius": 8,
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-width": 2,
+        },
+      });
+    }
+
     // add class to body to remove loading spinner
     document.querySelector("body").classList.add("loaded");
   });
@@ -92,7 +161,7 @@ const zoomlevel = ref(INITZOOM);
 
 // remove element .mapboxgl-ctrl-bottom-left from body:
 
-window.flyTo = function (lng, lat, zoom) {
+window.flyTo = function (lng, lat, zoom, showCurrentPoint = false) {
   // map.flyTo({
   //   center: [lng, lat],
   //   zoom: zoom
@@ -100,6 +169,19 @@ window.flyTo = function (lng, lat, zoom) {
   document.querySelector("body").classList.remove("loaded");
   window.map.setZoom(zoom);
   window.map.setCenter([lng, lat]);
+  
+  // Update current point if enabled
+  if (showCurrentPoint && window.map.getSource("current-point")) {
+    window.map.getSource("current-point").setData({
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "Point",
+        coordinates: [lng, lat]
+      }
+    });
+  }
+  
   window.map.once("idle", async (e) => {
     document.querySelector("body").classList.add("loaded");
   });

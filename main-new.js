@@ -16,7 +16,12 @@ const configObject = {
     jpgQuality: config.get("image.jpgQuality"),
     width: config.get("image.width"),
     height: config.get("image.height"),
-    name: config.get("image.name")
+    name: config.get("image.name"),
+    folder: config.get("image.folder")
+  },
+  visualization: {
+    showPath: config.get("visualization.showPath"),
+    showCurrentPoint: config.get("visualization.showCurrentPoint")
   },
   headless: config.get("headless"),
   debug: config.get("debug"),
@@ -25,7 +30,7 @@ const configObject = {
 
 // Start the server
 startServer();
-
+console.log(configObject);
 // Run the satellite stop motion
 satelliteStopMotion(configObject)
   .then(result => {
@@ -33,6 +38,9 @@ satelliteStopMotion(configObject)
       if (result.imagesCreated) {
         console.log(`✅ Successfully created ${result.imagesCreated} images`);
         console.log(`📁 Images saved in: images/`);
+        // Exit process after completion
+        console.log("Exiting process...");
+        process.exit(0);
       } else {
         console.log(`✅ Debug mode initialized successfully`);
         console.log(`🌐 Browser opened for debugging`);

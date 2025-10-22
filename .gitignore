@@ -15,7 +15,7 @@ build/
 
 # dotenv environment variables file
 .env
-
+images/** 
 images/*.jpg
 images2/*
 images3/*
