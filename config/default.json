@@ -1,13 +1,13 @@
 {
     "dataset": {
-        "file": "paths/guadalquivir.geojson",
-        "accesor": "features[0].geometry.coordinates"
+        "file": "paths/alcoi.json",
+        "accesor": ""
     },
     "map":{
         "zoom": 16,  
         "step": 0.001, 
         "mapbox":{       
-            "mapboxToken": "",
+            "mapboxToken": "pk.eyJ1IjoiaW52aWFibGUiLCJhIjoiY2xwYTRzMXRvMDRteDJqbmtucnk1Z3U0aCJ9.itMy9INBAXIfD08bQa7oiw",
             "mapboxStyle": "mapbox://styles/mapbox/satellite-v9"
         }
     },
@@ -15,10 +15,10 @@
         "jpgQuality": 90,
         "width": 1280,
         "height":720,
-        "name": "guadalquivir"
+        "name": "alcoi"
     },
-    "headless": false,
-    "debug": false,
+    "headless": true,
+    "debug": true,
     "runloop":true
 
 }
