@@ -284,15 +284,19 @@ class Map3DApplication {
                 return;
             }
 
-            // Get camera and target positions from pre-calculated route
-            const routeIndex = Math.floor(phase * (this.cameraRoute.length - 1));
-            const routePoint = this.cameraRoute[routeIndex];
+            // Smooth interpolation between route points
+            const interpolatedPositions = this.getInterpolatedPositions(phase);
             
             // Update the moving point visualization
-            this.updateMovingPoint(routePoint.target[0], routePoint.target[1]);
+            this.updateMovingPoint(interpolatedPositions.target[0], interpolatedPositions.target[1]);
 
-            // Update camera position using pre-calculated camera route
-            this.updateCameraPositionFromRoute(routePoint.camera[0], routePoint.camera[1], routePoint.target[0], routePoint.target[1]);
+            // Update camera position using interpolated positions
+            this.updateCameraPositionFromRoute(
+                interpolatedPositions.camera[0], 
+                interpolatedPositions.camera[1], 
+                interpolatedPositions.target[0], 
+                interpolatedPositions.target[1]
+            );
 
             // Continue animation
             this.animationId = requestAnimationFrame(animate);
@@ -315,6 +319,44 @@ class Map3DApplication {
         this.stopButton.disabled = true;
 
         console.log('Animation stopped');
+    }
+
+    getInterpolatedPositions(phase) {
+        // Calculate exact position in the route array
+        const exactIndex = phase * (this.cameraRoute.length - 1);
+        const lowerIndex = Math.floor(exactIndex);
+        const upperIndex = Math.min(lowerIndex + 1, this.cameraRoute.length - 1);
+        const interpolationFactor = exactIndex - lowerIndex;
+
+        // Get the two points to interpolate between
+        const lowerPoint = this.cameraRoute[lowerIndex];
+        const upperPoint = this.cameraRoute[upperIndex];
+
+        // Linear interpolation for both target and camera positions
+        const interpolatedTarget = this.interpolateCoordinates(
+            lowerPoint.target, 
+            upperPoint.target, 
+            interpolationFactor
+        );
+
+        const interpolatedCamera = this.interpolateCoordinates(
+            lowerPoint.camera, 
+            upperPoint.camera, 
+            interpolationFactor
+        );
+
+        return {
+            target: interpolatedTarget,
+            camera: interpolatedCamera
+        };
+    }
+
+    interpolateCoordinates(point1, point2, factor) {
+        // Linear interpolation between two coordinate points
+        return [
+            point1[0] + (point2[0] - point1[0]) * factor,
+            point1[1] + (point2[1] - point1[1]) * factor
+        ];
     }
 
     updateMovingPoint(lng, lat) {
