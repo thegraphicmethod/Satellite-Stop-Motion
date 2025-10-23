@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Stop Motion - Bundle Free</title>
+    
+    <!-- Mapbox GL CSS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .zoom-display {
+            position: absolute;
+            top: 20px;
+            right: 60px;
+            z-index: 10;
+            background-color: black;
+            color: #ccc;
+            padding: 0.5rem;
+            font-size: 20px;
+            border-radius: 4px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        
+        body.loaded .loading {
+            display: none;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .controls button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .controls button:hover {
+            background-color: #005a87;
+        }
+
+        .controls button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="loading">Loading 3D map...</div>
+    
+    <div class="controls">
+        <div>3D Path Animation</div>
+        <button id="start-animation">Start Animation</button>
+        <button id="stop-animation" disabled>Stop Animation</button>
+        <button id="reset-camera">Reset Camera</button>
+        <div style="margin-top: 8px;">
+            <label>Speed: </label>
+            <input type="range" id="speed-slider" min="10" max="120" value="60" style="width: 100px;">
+            <span id="speed-value">60s</span>
+        </div>
+    </div>
+
+    <div id="zoom-display" class="zoom-display" style="display: none;">
+        zoom: <span id="zoom-level">16.00</span>
+    </div>
+
+    <!-- Mapbox GL JS v3.15.0 -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+    
+    <!-- Turf.js for path calculations -->
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- ES6 Modules -->
+    <script type="module" src="./config.js"></script>
+    <script type="module" src="./buildmap3d.js"></script>
+</body>
+</html>
