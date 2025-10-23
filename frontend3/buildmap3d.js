@@ -11,10 +11,12 @@ class Map3DApplication {
         this.animationDuration = 60000; // 60 seconds default
         this.cameraAltitude = 2000; // meters above ground
         this.startTime = null;
-        this.cameraOffset = 0.004; // Distance behind the moving point (in degrees)
-        this.cameraDistance = 0.005; // Distance behind target in degrees
-        this.cameraHeight = 1500; // Height above ground in meters
+        this.cameraDistance = 0.008; // Distance behind target in degrees
+        this.cameraHeight = 1700; // Height above ground in meters
         this.cameraRoute = []; // Pre-calculated camera positions
+        this.smoothCameraPosition = null; // Current smoothed camera position
+        this.smoothCameraTarget = null; // Current smoothed camera target
+        this.cameraSmoothingFactor = 0.1; // How quickly camera catches up (0.1 = smooth, 1.0 = instant)
         
         // Animation controls
         this.startButton = null;
@@ -290,8 +292,8 @@ class Map3DApplication {
             // Update the moving point visualization
             this.updateMovingPoint(interpolatedPositions.target[0], interpolatedPositions.target[1]);
 
-            // Update camera position using interpolated positions
-            this.updateCameraPositionFromRoute(
+            // Update camera position with smooth movement
+            this.updateCameraPositionSmooth(
                 interpolatedPositions.camera[0], 
                 interpolatedPositions.camera[1], 
                 interpolatedPositions.target[0], 
@@ -373,19 +375,33 @@ class Map3DApplication {
         }
     }
 
-    updateCameraPositionFromRoute(cameraLng, cameraLat, targetLng, targetLat) {
+    updateCameraPositionSmooth(targetCameraLng, targetCameraLat, targetLng, targetLat) {
         const camera = this.map.getFreeCameraOptions();
 
-        // Set camera position with altitude (from pre-calculated route)
+        // Initialize smooth positions if not set
+        if (!this.smoothCameraPosition) {
+            this.smoothCameraPosition = [targetCameraLng, targetCameraLat];
+            this.smoothCameraTarget = [targetLng, targetLat];
+        }
+
+        // Smooth camera position using exponential smoothing
+        this.smoothCameraPosition[0] += (targetCameraLng - this.smoothCameraPosition[0]) * this.cameraSmoothingFactor;
+        this.smoothCameraPosition[1] += (targetCameraLat - this.smoothCameraPosition[1]) * this.cameraSmoothingFactor;
+
+        // Smooth camera target (what camera looks at) - this is the key for smooth movement
+        this.smoothCameraTarget[0] += (targetLng - this.smoothCameraTarget[0]) * this.cameraSmoothingFactor;
+        this.smoothCameraTarget[1] += (targetLat - this.smoothCameraTarget[1]) * this.cameraSmoothingFactor;
+
+        // Set camera position with altitude
         camera.position = mapboxgl.MercatorCoordinate.fromLngLat(
-            { lng: cameraLng, lat: cameraLat },
+            { lng: this.smoothCameraPosition[0], lat: this.smoothCameraPosition[1] },
             this.cameraHeight
         );
 
-        // Always look at the moving point
+        // Always look at the smoothed target
         camera.lookAtPoint({
-            lng: targetLng,
-            lat: targetLat
+            lng: this.smoothCameraTarget[0],
+            lat: this.smoothCameraTarget[1]
         });
 
         // Maintain 3D perspective by setting pitch after lookAtPoint
@@ -397,11 +413,15 @@ class Map3DApplication {
     resetCamera() {
         this.stopAnimation();
         
+        // Reset smooth positions
+        this.smoothCameraPosition = null;
+        this.smoothCameraTarget = null;
+        
         if (this.cameraRoute.length > 0) {
             // Reset to first position in camera route
             const firstRoutePoint = this.cameraRoute[0];
             this.updateMovingPoint(firstRoutePoint.target[0], firstRoutePoint.target[1]);
-            this.updateCameraPositionFromRoute(
+            this.updateCameraPositionSmooth(
                 firstRoutePoint.camera[0], 
                 firstRoutePoint.camera[1], 
                 firstRoutePoint.target[0], 
@@ -426,7 +446,7 @@ class Map3DApplication {
             this.map.setFreeCameraOptions(camera);
         }
         
-        console.log('Camera and moving point reset with drone perspective');
+        console.log('Camera and moving point reset with smooth movement');
     }
 
     hideLoadingSpinner() {
